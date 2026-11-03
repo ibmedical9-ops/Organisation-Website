@@ -6,7 +6,7 @@ window.SITE = {
   instagram: "https://www.instagram.com/iraqbuilders",
   // رابط ملف أرقام القسم الطبي. الافتراضي: data/medical-stats.json
   // أو رابط Google Sheets منشور كـ CSV بصيغة: المفتاح,القيمة
-  statsUrl: "",
+  statsUrl: "https://system.iraqbuilders.org/public-stats",
   // مكوّن صفحة فيسبوك الجاهز لا يعرض منشورات هذه الصفحة حاليًا. فعّله (true) إذا عمل لاحقًا.
   fbPlugin: false,
   youtube: "https://www.youtube.com/@IraqBuilders"
