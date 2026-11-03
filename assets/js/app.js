@@ -34,6 +34,13 @@
   if(box&&window.fetch){
     fetch('data/posts.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():[]}).then(function(list){
       list.slice(0,6).forEach(function(p){
+        if(p.embed){
+          var w=document.createElement('div');w.className='post post-embed';
+          var f=document.createElement('iframe');
+          f.title='منشور من صفحة منظمة بناة العراق على فيسبوك';f.loading='lazy';f.allow='encrypted-media';
+          f.src='https://www.facebook.com/plugins/post.php?href='+encodeURIComponent(p.embed)+'&show_text=true&width=500&locale=ar_AR';
+          w.appendChild(f);box.appendChild(w);return;
+        }
         var a=document.createElement('article');a.className='post';
         var h='';
         if(p.image)h+='<img loading="lazy" alt="" src="'+encodeURI(p.image)+'">';
