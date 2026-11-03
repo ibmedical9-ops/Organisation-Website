@@ -205,3 +205,5 @@ footer ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 
 .post-embed{padding:0;border:0;background:transparent;display:flex;justify-content:center}
 .post-embed iframe{border:0;width:100%;max-width:500px;height:560px;background:#fff;border-radius:var(--r)}
+
+.social-box.single{grid-template-columns:1fr;max-width:760px}

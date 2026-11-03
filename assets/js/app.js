@@ -18,6 +18,10 @@
 
   // صفحة فيسبوك: تحميل متأخر
   var fb=$('#fb-frame');
+  if(fb&&!S.fbPlugin){
+    var wrap=fb.closest('.fbwrap');if(wrap){var sb=wrap.closest('.social-box');if(sb)sb.classList.add('single');wrap.remove()}
+    fb=null;
+  }
   if(fb){
     var load=function(){
       var w=Math.min(500,fb.parentNode.clientWidth-24)||340;
