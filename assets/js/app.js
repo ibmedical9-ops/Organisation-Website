@@ -48,6 +48,29 @@
     }).catch(function(){});
   }
 
+
+  // أرقام القسم الطبي (تحديث مباشر من ملف JSON أو CSV)
+  var statEls=$$('[data-stat]');
+  if(statEls.length&&window.fetch){
+    var url=S.statsUrl||'data/medical-stats.json';
+    var parse=function(txt){
+      try{return JSON.parse(txt)}catch(e){}
+      var o={};txt.split(/\r?\n/).forEach(function(l){var m=l.split(',');if(m.length>=2)o[m[0].trim()]=m.slice(1).join(',').trim()});return o;
+    };
+    fetch(url,{cache:'no-cache'}).then(function(r){return r.ok?r.text():Promise.reject()}).then(function(txt){
+      var d=parse(txt),n=function(k){return Number(d[k])};
+      if(!(n('available')>=0)||!(n('unavailable')>=0))return;
+      var total=n('available')+n('unavailable');
+      d.percent=total?Math.round(n('available')/total*100):0;
+      statEls.forEach(function(e){
+        var k=e.getAttribute('data-stat'),v=d[k];
+        if(v===undefined||v==='')return;
+        e.textContent=(k==='updated')?v:Number(v).toLocaleString('en-US');
+      });
+      $$('[data-bar]').forEach(function(b){b.style.width=d.percent+'%'});
+    }).catch(function(){});
+  }
+
   // نموذج التبرع
   var df=$('#donate-form');
   if(df){
