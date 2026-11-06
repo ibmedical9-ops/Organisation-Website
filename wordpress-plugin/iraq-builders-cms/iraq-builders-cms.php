@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Iraq Builders CMS
  * Description: لوحة بسيطة لإدارة أخبار وأنشطة ومعلومات التبرع لموقع منظمة بناة العراق، مع واجهة قراءة عامة (REST) للموقع الثابت.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Iraq Builders
  * License: GPL-2.0-or-later
  * Text Domain: ibcms
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'IBCMS_VERSION', '1.0.0' );
+define( 'IBCMS_VERSION', '1.1.0' );
 define( 'IBCMS_NS', 'ib/v1' );
 
 /* ------------------------------------------------------------------
@@ -39,6 +39,15 @@ function ibcms_icons() {
 		'moon'  => 'رمضان',
 		'heart' => 'كفالة ورعاية',
 		'gift'  => 'مساعدات',
+	);
+}
+
+/** أماكن عرض النشاط في صفحة الأنشطة. */
+function ibcms_groups() {
+	return array(
+		'general' => 'ضمن قائمة الأنشطة',
+		'ramadan' => 'ضمن قسم «أنشطة رمضان»',
+		'project' => 'مشروع مميز (قسم خاص، مثل مشروع خطوة)',
 	);
 }
 
@@ -150,6 +159,13 @@ function ibcms_render_fields( $post ) {
 			<input type="url" id="ib_link" name="ib_link" class="en" dir="ltr" placeholder="https://" value="<?php echo esc_attr( $m( '_ib_link' ) ); ?>">
 		<?php else : ?>
 			<h4>العرض في الموقع</h4>
+			<label for="ib_group">مكان العرض في صفحة الأنشطة</label>
+			<select id="ib_group" name="ib_group">
+				<?php $cur_group = $m( '_ib_group' ) ? $m( '_ib_group' ) : 'general'; ?>
+				<?php foreach ( ibcms_groups() as $k => $label ) : ?>
+					<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $cur_group, $k ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
 			<label for="ib_order">الترتيب (الرقم الأصغر يظهر أولًا)</label>
 			<input type="number" id="ib_order" name="ib_order" min="0" max="999" value="<?php echo esc_attr( $m( '_ib_order' ) !== '' ? $m( '_ib_order' ) : 50 ); ?>">
 			<label for="ib_icon">أيقونة (تظهر إذا لم تضع صورة)</label>
@@ -197,6 +213,8 @@ add_action( 'save_post', function ( $post_id, $post ) {
 		$icon = isset( $_POST['ib_icon'] ) ? sanitize_key( wp_unslash( $_POST['ib_icon'] ) ) : '';
 		update_post_meta( $post_id, '_ib_icon', array_key_exists( $icon, ibcms_icons() ) ? $icon : '' );
 		update_post_meta( $post_id, '_ib_featured', ! empty( $_POST['ib_featured'] ) ? '1' : '0' );
+		$group = isset( $_POST['ib_group'] ) ? sanitize_key( wp_unslash( $_POST['ib_group'] ) ) : 'general';
+		update_post_meta( $post_id, '_ib_group', array_key_exists( $group, ibcms_groups() ) ? $group : 'general' );
 	}
 }, 10, 2 );
 
@@ -456,6 +474,7 @@ function ibcms_activity_item( $p ) {
 		'icon'     => ibcms_str( get_post_meta( $p->ID, '_ib_icon', true ) ),
 		'order'    => (int) get_post_meta( $p->ID, '_ib_order', true ),
 		'featured' => '1' === get_post_meta( $p->ID, '_ib_featured', true ),
+		'group'    => ( $g = ibcms_str( get_post_meta( $p->ID, '_ib_group', true ) ) ) && array_key_exists( $g, ibcms_groups() ) ? $g : 'general',
 	);
 }
 
@@ -572,57 +591,82 @@ remove_action( 'wp_head', 'wp_generator' );
 add_filter( 'the_generator', '__return_empty_string' );
 
 /* ------------------------------------------------------------------
- * أنشطة افتراضية عند أول تفعيل
+ * أنشطة افتراضية (تُضاف مرة واحدة لكل نشاط، ولا يعاد إنشاء ما يحذفه المدير)
  * ------------------------------------------------------------------ */
 
-function ibcms_seed_activities() {
-	$existing = get_posts( array( 'post_type' => 'ib_activity', 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids' ) );
-	if ( $existing ) {
-		return;
-	}
-	$items = array(
-		array( 'renovation', 10, '', 1, 'مهمة بناء (ترميم المنازل)', 'Building Mission (home renovation)',
+function ibcms_default_activities() {
+	// slug, order, icon, featured, group, title_ar, title_en, text_ar, text_en
+	return array(
+		array( 'renovation', 10, '', 1, 'general', 'مهمة بناء (ترميم المنازل)', 'Building Mission (home renovation)',
 			'بفضل جهود المتطوعين وتكاتف الأيادي الخيرة، نرمم المنازل المتضررة ونوفر سقفًا آمنًا وبيئة مناسبة للعائلات المتعففة.',
 			'Thanks to the efforts of volunteers and generous hands, we renovate damaged homes and provide a safe roof and a suitable environment for families in need.' ),
-		array( 'food', 20, '', 1, 'سلال غذائية', 'Food baskets',
+		array( 'food', 20, '', 1, 'general', 'سلال غذائية', 'Food baskets',
 			'بدعم من فريق بناة العراق التطوعي نوزع سلالًا غذائية على الأسر المحتاجة.',
 			'With the support of the Iraq Builders volunteer team, we distribute food baskets to families in need.' ),
-		array( 'education', 30, '', 1, 'حقيبة مدرسية', 'School bags',
+		array( 'education', 30, '', 1, 'general', 'حقيبة مدرسية', 'School bags',
 			'حقائب مدرسية مجهزة بالكامل للطلاب المحتاجين، ضمن مبادرة الفريق لدعم التعليم.',
 			'Fully equipped school bags for students in need, as part of the team\'s initiative to support education.' ),
-		array( 'appliances', 40, '', 1, 'أجهزة كهربائية ومنزلية', 'Electrical and home appliances',
+		array( 'appliances', 40, '', 1, 'general', 'أجهزة كهربائية ومنزلية', 'Electrical and home appliances',
 			'نوزع الأجهزة الكهربائية والمنزلية الضرورية للأسر ذات الدخل المحدود، لتحسين جودة الحياة اليومية وتخفيف الأعباء المالية.',
 			'We distribute essential electrical and household appliances to low-income families, improving daily life and easing financial burdens.' ),
-		array( 'medical-care', 50, 'cross', 0, 'رعاية طبية', 'Medical care',
+		array( 'medical-care', 50, 'cross', 0, 'general', 'رعاية طبية', 'Medical care',
 			'عمليات وأدوية: تغطية تكاليف العمليات الجراحية والدواء للمحتاجين.',
 			'Surgeries and medicines: covering the cost of surgical operations and medicine for those in need.' ),
-		array( 'eid-clothing', 60, 'shirt', 0, 'كسوة العيد', 'Eid clothing',
+		array( 'eid-clothing', 60, 'shirt', 0, 'general', 'كسوة العيد', 'Eid clothing',
 			'ملابس جديدة للأطفال والعائلات في أعياد الفطر والأضحى.',
 			'New clothes for children and families at Eid al-Fitr and Eid al-Adha.' ),
-		array( 'livelihood', 70, 'tools', 0, 'مشاريع تشغيلية', 'Livelihood projects',
+		array( 'livelihood', 70, 'tools', 0, 'general', 'مشاريع تشغيلية', 'Livelihood projects',
 			'تعزيز الاستقلالية الاقتصادية للأفراد بتوفير فرص عمل ومشاريع صغيرة.',
 			'Strengthening individuals\' economic independence through jobs and small projects.' ),
-		array( 'sponsorship', 80, 'heart', 0, 'كفالات', 'Sponsorships',
-			'برامج كفالة طبية ودراسية ومعيشية للأسر والأفراد المحتاجين.',
-			'Medical, educational and living sponsorship programs for families and individuals in need.' ),
-		array( 'financial-aid', 90, 'gift', 0, 'مساعدات مالية', 'Financial aid',
+		array( 'sponsorship', 80, 'heart', 0, 'general', 'كفالات', 'Sponsorships',
+			'أنشطة كفالة طبية ودراسية ومعيشية للأسر والأفراد المحتاجين.',
+			'Medical, educational and living sponsorship activities for families and individuals in need.' ),
+		array( 'financial-aid', 90, 'gift', 0, 'general', 'مساعدات مالية', 'Financial aid',
 			'مساعدات مالية للأسر والأفراد الذين يواجهون صعوبات اقتصادية.',
 			'Financial assistance for families and individuals facing economic hardship.' ),
+		array( 'khatwa', 100, '', 0, 'project', 'مشروع خطوة', 'Khatwa project',
+			'مشروع يمكّن الشباب والباحثين عن العمل عبر تطوير مهاراتهم المهنية ودمجهم في سوق العمل. يسعى المشروع إلى سد الفجوة بين المهارات التي يمتلكها الباحثون عن العمل واحتياجات السوق، وتدريب الأفراد على مهارات مهنية متخصصة.',
+			'A project that empowers young people and job seekers by developing their professional skills and integrating them into the labor market. It aims to bridge the gap between job seekers\' skills and market needs, and to train individuals in specialized professional skills.' ),
+		array( 'ramadan-iftar', 110, 'moon', 0, 'ramadan', 'إفطار العوائل', 'Family iftars',
+			'موائد إفطار للعائلات المحتاجة.', 'Iftar tables for families in need.' ),
+		array( 'zakat-fitr', 120, 'heart', 0, 'ramadan', 'زكاة الفطرة', 'Zakat al-Fitr',
+			'نوصل زكاة الفطرة لمستحقيها.', 'Delivering Zakat al-Fitr to those who deserve it.' ),
+		array( 'ramadan-baskets', 130, 'gift', 0, 'ramadan', 'سلات رمضانية', 'Ramadan baskets',
+			'سلات غذائية خاصة بالشهر الفضيل.', 'Food baskets for the holy month.' ),
+		array( 'ramadan-eid-clothing', 140, 'shirt', 0, 'ramadan', 'كسوة العيد', 'Eid clothing',
+			'فرحة العيد بملابس جديدة للأطفال.', 'The joy of Eid with new clothes for children.' ),
 	);
-	foreach ( $items as $it ) {
+}
+
+function ibcms_seed_activities() {
+	$seeded = get_option( 'ibcms_seeded_slugs', array() );
+	if ( ! is_array( $seeded ) ) {
+		$seeded = array();
+	}
+	foreach ( ibcms_default_activities() as $it ) {
+		if ( in_array( $it[0], $seeded, true ) ) {
+			continue;
+		}
+		$seeded[] = $it[0];
+		$exists   = get_posts( array( 'post_type' => 'ib_activity', 'name' => $it[0], 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids' ) );
+		if ( $exists ) {
+			continue;
+		}
 		$id = wp_insert_post( array(
 			'post_type'   => 'ib_activity',
 			'post_status' => 'publish',
-			'post_title'  => $it[4],
+			'post_title'  => $it[5],
 			'post_name'   => $it[0],
 		) );
 		if ( $id && ! is_wp_error( $id ) ) {
 			update_post_meta( $id, '_ib_order', $it[1] );
 			update_post_meta( $id, '_ib_icon', $it[2] );
 			update_post_meta( $id, '_ib_featured', $it[3] ? '1' : '0' );
-			update_post_meta( $id, '_ib_title_en', $it[5] );
-			update_post_meta( $id, '_ib_text_ar', $it[6] );
-			update_post_meta( $id, '_ib_text_en', $it[7] );
+			update_post_meta( $id, '_ib_group', $it[4] );
+			update_post_meta( $id, '_ib_title_en', $it[6] );
+			update_post_meta( $id, '_ib_text_ar', $it[7] );
+			update_post_meta( $id, '_ib_text_en', $it[8] );
 		}
 	}
+	update_option( 'ibcms_seeded_slugs', $seeded, false );
 }

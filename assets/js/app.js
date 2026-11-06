@@ -174,16 +174,20 @@
       more.href='news-item.html?id='+encodeURIComponent(it.id);more.style.cssText=btnStyle;
       tx.appendChild(more);a.appendChild(tx);return a;
     };
-    var actCard=function(it,idx,link){
-      var a=mk('article','card'),title=pick(it.title);if(it.slug&&!link)a.id=it.slug;
+    var actCard=function(it,idx,mode){
+      // mode: 'support' (زر ادعم) | 'link' (زر التفاصيل) | 'plain' (بدون زر)
+      var a=mk('article','card'),title=pick(it.title);if(it.slug&&mode==='support')a.id=it.slug;
       var src=(it.image&&okUrl(it.image.url))||(LOCAL[it.slug]?ROOT+'assets/img/'+LOCAL[it.slug]:'');
       if(src){var im=mk('div','im');im.appendChild(imgEl(src,(it.image&&it.image.alt)||title));a.appendChild(im)}
       else{var ic=mk('div','ico'+(idx%3===1?' tint2':idx%3===2?' tint3':''));ic.appendChild(svgIcon(it.icon));a.appendChild(ic)}
       var tx=mk('div','tx');tx.appendChild(mk('h3','',title));
       var tt=pick(it.text);if(tt)tx.appendChild(mk('p','',excerpt(tt,220)));
-      var b=mk('a','btn btn-line-d',link?T('التفاصيل','Details'):T('ادعم هذا النشاط','Support this activity'));
-      b.href=link?'activities.html#'+encodeURIComponent(it.slug):'donate.html';b.style.cssText=btnStyle;
-      tx.appendChild(b);a.appendChild(tx);return a;
+      if(mode!=='plain'){
+        var b=mk('a','btn btn-line-d',mode==='link'?T('التفاصيل','Details'):T('ادعم هذا النشاط','Support this activity'));
+        b.href=mode==='link'?'activities.html#'+encodeURIComponent(it.slug):'donate.html';b.style.cssText=btnStyle;
+        tx.appendChild(b);
+      }
+      a.appendChild(tx);return a;
     };
 
     // الرئيسية: آخر الأخبار
@@ -233,21 +237,32 @@
       }).catch(fail);
     }
 
-    // الأنشطة
-    var al=$('#cms-activities');
-    if(al)api('/activities').then(function(d){
-      if(!d.items||!d.items.length)return;
-      d.items.forEach(function(it,i){al.appendChild(actCard(it,i,false))});
-      $('#cms-activities-sec').hidden=false;
-      $$('[data-fallback]').forEach(function(e){e.parentNode.removeChild(e)});
-      if(location.hash){var t=document.getElementById(decodeURIComponent(location.hash.slice(1)));if(t)t.scrollIntoView()}
-    }).catch(function(){});
-    var ha=$('#home-activities');
-    if(ha)api('/activities').then(function(d){
-      var list=(d.items||[]).filter(function(x){return x.featured});
-      if(!list.length)list=(d.items||[]).slice(0,4);
-      list=list.slice(0,4);if(!list.length)return;
-      ha.textContent='';list.forEach(function(it,i){ha.appendChild(actCard(it,i,true))});
+    // الأنشطة (طلب واحد يخدم الرئيسية وصفحة الأنشطة)
+    var al=$('#cms-activities'),ha=$('#home-activities'),rg=$('#ramadan-grid'),kt=$('#khatwa-title');
+    if(al||ha||rg||kt)api('/activities').then(function(d){
+      var all=d.items||[];
+      var grp=function(g){return all.filter(function(x){return (x.group||'general')===g})};
+      var general=grp('general');
+      if(al&&general.length){
+        general.forEach(function(it,i){al.appendChild(actCard(it,i,'support'))});
+        $('#cms-activities-sec').hidden=false;
+        $$('[data-fallback]').forEach(function(e){e.parentNode.removeChild(e)});
+      }
+      if(ha){
+        var list=general.filter(function(x){return x.featured});
+        if(!list.length)list=general.slice(0,4);
+        list=list.slice(0,4);
+        if(list.length){ha.textContent='';list.forEach(function(it,i){ha.appendChild(actCard(it,i,'link'))})}
+      }
+      var ram=grp('ramadan');
+      if(rg&&ram.length){rg.textContent='';ram.forEach(function(it,i){rg.appendChild(actCard(it,i,'plain'))})}
+      var proj=grp('project')[0];
+      if(kt&&proj){
+        var tt=pick(proj.title);if(tt)kt.textContent=tt;
+        var tx=pick(proj.text);var te=$('#khatwa-text');if(te&&tx){te.textContent=tx;te.style.whiteSpace='pre-line'}
+        var ki=$('#khatwa-img');var ps=(proj.image&&okUrl(proj.image.url));if(ki&&ps){ki.src=ps;if(proj.image.alt)ki.alt=proj.image.alt}
+      }
+      if(location.hash){var el=document.getElementById(decodeURIComponent(location.hash.slice(1)));if(el)el.scrollIntoView()}
     }).catch(function(){});
 
     // معلومات التبرع
