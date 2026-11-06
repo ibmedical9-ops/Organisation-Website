@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>https://iraqbuilders.org/</loc></url>
+<url><loc>https://iraqbuilders.org/en/</loc></url>
 <url><loc>https://iraqbuilders.org/about.html</loc></url>
-<url><loc>https://iraqbuilders.org/programs.html</loc></url>
+<url><loc>https://iraqbuilders.org/en/about.html</loc></url>
+<url><loc>https://iraqbuilders.org/activities.html</loc></url>
+<url><loc>https://iraqbuilders.org/en/activities.html</loc></url>
 <url><loc>https://iraqbuilders.org/news.html</loc></url>
+<url><loc>https://iraqbuilders.org/en/news.html</loc></url>
 <url><loc>https://iraqbuilders.org/volunteer.html</loc></url>
-<url><loc>https://iraqbuilders.org/contact.html</loc></url>
+<url><loc>https://iraqbuilders.org/en/volunteer.html</loc></url>
 <url><loc>https://iraqbuilders.org/donate.html</loc></url>
+<url><loc>https://iraqbuilders.org/en/donate.html</loc></url>
+<url><loc>https://iraqbuilders.org/contact.html</loc></url>
+<url><loc>https://iraqbuilders.org/en/contact.html</loc></url>
 </urlset>
