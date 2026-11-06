@@ -60,7 +60,7 @@
   if(box&&window.fetch){
     fetch(ROOT+'data/posts.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():[]}).then(function(list){
       list.slice(0,6).forEach(function(p){
-        if(p.embed){
+        if(p.embed&&/^https:\/\/(www|web|m)\.facebook\.com\//i.test(p.embed)){
           var w=document.createElement('div');w.className='post post-embed';
           var f=document.createElement('iframe');
           f.title=T('منشور من صفحة منظمة بناة العراق على فيسبوك','Post from the Iraq Builders Facebook page');f.loading='lazy';f.allow='encrypted-media';
@@ -68,13 +68,13 @@
           w.appendChild(f);box.appendChild(w);return;
         }
         var a=document.createElement('article');a.className='post';
-        var img=p.image?(/^https?:/.test(p.image)?p.image:ROOT+p.image):'';
+        var img=p.image?(/^https?:\/\//i.test(p.image)?p.image:(/^[\w\-\/.]+$/.test(p.image)?ROOT+p.image:'')):'';
         var h='';
         if(img)h+='<img loading="lazy" alt="" src="'+encodeURI(img)+'">';
         h+='<div>';
         if(p.date)h+='<time>'+String(p.date).replace(/[<>&"]/g,'')+'</time>';
         h+='<p></p>';
-        if(p.url)h+='<p><a target="_blank" rel="noopener" href="'+encodeURI(p.url)+'">'+T('عرض على فيسبوك ←','View on Facebook →')+'</a></p>';
+        if(p.url&&/^https?:\/\//i.test(p.url))h+='<p><a target="_blank" rel="noopener" href="'+encodeURI(p.url)+'">'+T('عرض على فيسبوك ←','View on Facebook →')+'</a></p>';
         h+='</div>';a.innerHTML=h;
         a.querySelector('p').textContent=(AR?p.text:(p.text_en||p.text))||'';
         box.appendChild(a);

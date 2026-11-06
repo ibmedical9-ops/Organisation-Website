@@ -15,6 +15,10 @@ RewriteCond %{HTTPS} off
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# النظام الطبي له نطاقه الفرعي؛ لا يُفتح عبر مسار /system على النطاق الرئيسي
+RewriteCond %{HTTP_HOST} ^(www\.)?iraqbuilders\.org$ [NC]
+RewriteRule ^system(/.*)?$ https://system.iraqbuilders.org$1 [L,R=301]
+
 # www إلى بدون www
 RewriteCond %{HTTP_HOST} ^www\.iraqbuilders\.org$ [NC]
 RewriteRule ^ https://iraqbuilders.org%{REQUEST_URI} [L,R=301]
@@ -36,16 +40,24 @@ RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
 RewriteRule ^المتجر/?$ / [L,R=301]
 </IfModule>
 
-# ترويسات أمان خفيفة
+# ترويسات أمان (للنطاق الرئيسي فقط حتى لا تتأثر النظام الطبي)
+<IfModule mod_setenvif.c>
+SetEnvIfNoCase Host ^(www\.)?iraqbuilders\.org$ IB_MAIN
+</IfModule>
 <IfModule mod_headers.c>
 Header always set X-Content-Type-Options "nosniff"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set X-Frame-Options "SAMEORIGIN" env=IB_MAIN
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()" env=IB_MAIN
+Header always unset X-Powered-By
+# سياسة محتوى بوضع المراقبة فقط (لا تحجب شيئًا). راقب Console في المتصفح، ثم غيّر الاسم إلى Content-Security-Policy.
+Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://system.iraqbuilders.org; frame-src https://www.facebook.com; object-src 'none'; base-uri 'self'; form-action 'self'" env=IB_MAIN
 # فعّل السطر التالي بعد التأكد أن HTTPS يعمل على كل الصفحات والنطاقات الفرعية:
 # Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
 
 # منع الوصول للملفات المخفية وملفات التوثيق
-<FilesMatch "^\.(?!well-known)|\.(md|log)$">
+<FilesMatch "^\.(?!well-known)|\.(md|log)$|^(readme\.html|license\.txt|error_log)$">
 Require all denied
 </FilesMatch>
 

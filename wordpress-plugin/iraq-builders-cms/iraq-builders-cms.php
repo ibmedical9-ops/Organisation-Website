@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Iraq Builders CMS
  * Description: لوحة بسيطة لإدارة أخبار وأنشطة ومعلومات التبرع لموقع منظمة بناة العراق، مع واجهة قراءة عامة (REST) للموقع الثابت.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Iraq Builders
  * License: GPL-2.0-or-later
  * Text Domain: ibcms
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'IBCMS_VERSION', '1.1.0' );
+define( 'IBCMS_VERSION', '1.1.1' );
 define( 'IBCMS_NS', 'ib/v1' );
 
 /* ------------------------------------------------------------------
@@ -586,6 +586,17 @@ add_filter( 'rest_endpoints', function ( $endpoints ) {
 	}
 	return $endpoints;
 } );
+// منع كشف اسم المستخدم عبر ?author=1 وصفحات المؤلفين لغير المسجلين
+add_action( 'template_redirect', 'ibcms_block_author_enum', 0 );
+function ibcms_block_author_enum() {
+	if ( is_admin() || is_user_logged_in() ) {
+		return;
+	}
+	if ( isset( $_GET['author'] ) || is_author() ) {
+		wp_safe_redirect( home_url( '/' ), 301 );
+		exit;
+	}
+}
 add_filter( 'xmlrpc_enabled', '__return_false' );
 remove_action( 'wp_head', 'wp_generator' );
 add_filter( 'the_generator', '__return_empty_string' );
