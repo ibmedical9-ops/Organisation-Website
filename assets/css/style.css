@@ -225,3 +225,11 @@ html[lang=en] .eyebrow,html[lang=en] .kicker{letter-spacing:.04em}
 .payrow .num{display:block;font:700 clamp(20px,3.4vw,26px) var(--f-head);letter-spacing:.04em;color:var(--green-900);font-variant-numeric:tabular-nums;word-break:break-all}
 .payrow .btn{min-height:42px;padding:6px 20px}
 .paynote{font-size:15.5px}
+
+/* محتوى لوحة الإدارة */
+.card .meta{font-size:13px;color:var(--muted)}
+.article{max-width:760px}
+.article h1{font-size:clamp(26px,4vw,38px);margin-bottom:8px}
+.article .meta{display:block;color:var(--muted);font-size:14px;margin-bottom:18px}
+.article p{margin-top:14px}
+.grid.g3 .card:only-child{max-width:420px}
