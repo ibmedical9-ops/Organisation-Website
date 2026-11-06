@@ -1,38 +1,46 @@
 # إعدادات الخادم للموقع الثابت (هوستنجر / LiteSpeed أو Apache)
-# ملاحظة: مجلد ووردبريس (cms/) له ملف .htaccess خاص به ولا يتأثر بقواعد التحويل هنا.
+#
+# مهم: يوجد على نفس الاستضافة موقع آخر (النظام الطبي في مجلد system، ونطاقه system.iraqbuilders.org).
+# لذلك كل القواعد هنا محصورة بنطاق iraqbuilders.org فقط، ولا تغيّر سلوك النظام الطبي.
+# مجلد ووردبريس (cms/) له ملف .htaccess خاص به.
 
 Options -Indexes
-DirectoryIndex index.html
 ErrorDocument 404 /404.html
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
-# إجبار HTTPS
+
+# إجبار HTTPS (لا يغيّر النطاق)
 RewriteCond %{HTTPS} off
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteRule ^ https://iraqbuilders.org%{REQUEST_URI} [L,R=301]
-# بدون www
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# www إلى بدون www
 RewriteCond %{HTTP_HOST} ^www\.iraqbuilders\.org$ [NC]
 RewriteRule ^ https://iraqbuilders.org%{REQUEST_URI} [L,R=301]
+
+# تحويل روابط الموقع القديم إلى الجديد (يحافظ على ظهور الموقع في جوجل)، للنطاق الرئيسي فقط
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^about/?$ /about.html [L,R=301]
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^contact-us/?$ /contact.html [L,R=301]
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^volunteer/?$ /volunteer.html [L,R=301]
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^الاخبار/?$ /news.html [L,R=301]
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^مشروع-خطوة/?$ /activities.html [L,R=301]
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^انشطة-رمضان/?$ /activities.html [L,R=301]
+RewriteCond %{HTTP_HOST} ^iraqbuilders\.org$ [NC]
+RewriteRule ^المتجر/?$ / [L,R=301]
 </IfModule>
 
-# تحويل روابط الموقع القديم إلى الجديد (يحافظ على ظهور الموقع في جوجل)
-<IfModule mod_alias.c>
-RedirectMatch 301 ^/about/?$ /about.html
-RedirectMatch 301 ^/contact-us/?$ /contact.html
-RedirectMatch 301 ^/volunteer/?$ /volunteer.html
-RedirectMatch 301 ^/الاخبار/?$ /news.html
-RedirectMatch 301 ^/مشروع-خطوة/?$ /activities.html
-RedirectMatch 301 ^/انشطة-رمضان/?$ /activities.html
-RedirectMatch 301 ^/المتجر/?$ /
-</IfModule>
-
-# ترويسات أمان
+# ترويسات أمان خفيفة
 <IfModule mod_headers.c>
 Header always set X-Content-Type-Options "nosniff"
-Header always set X-Frame-Options "SAMEORIGIN"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
-# فعّل السطر التالي بعد التأكد أن HTTPS يعمل على كل الصفحات:
+# فعّل السطر التالي بعد التأكد أن HTTPS يعمل على كل الصفحات والنطاقات الفرعية:
 # Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
 
@@ -41,16 +49,15 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Require all denied
 </FilesMatch>
 
-# ضغط وتخزين مؤقت
+# ضغط وتخزين مؤقت للملفات الثابتة فقط (لا نمسّ صفحات HTML حتى لا نؤثر على النظام الطبي)
 <IfModule mod_deflate.c>
-AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+AddOutputFilterByType DEFLATE text/css application/javascript image/svg+xml
 </IfModule>
 <IfModule mod_expires.c>
 ExpiresActive On
-ExpiresByType image/webp "access plus 1 year"
-ExpiresByType image/png "access plus 1 year"
-ExpiresByType image/jpeg "access plus 1 year"
+ExpiresByType image/webp "access plus 30 days"
+ExpiresByType image/png "access plus 30 days"
+ExpiresByType image/jpeg "access plus 30 days"
 ExpiresByType text/css "access plus 1 day"
 ExpiresByType application/javascript "access plus 1 day"
-ExpiresByType text/html "access plus 5 minutes"
 </IfModule>
